@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 
 #define SERVER_PORT 2315  /* 2+Last 3 of ID */
 #define BUF_SIZE 4096     /* block transfer size */
@@ -16,7 +17,7 @@ void fatal(char *string);
 
 int main(int argc, char *argv[])
 {    
-    int s, b, l, fd, sa, bytes, on = 1;
+    int s, b, l, fd, sa, bytes, on, i = 1;
     char buf[BUF_SIZE];          /* buffer for outgoing file */
     struct sockaddr_in channel;  /* hold's IP address */
 
@@ -49,11 +50,14 @@ int main(int argc, char *argv[])
         fd = open(buf, O_RDONLY);  /* open the file to be sent back */
         if (fd < 0) fatal("open failed");
 
-        while (1)
+        /* For loop to keep track of packet number*/
+        for(i = 0;; i++)
         {
             bytes = read(fd, buf, BUF_SIZE);  /* read from file */
             if (bytes <= 0) break;            /* check for end of file */
             write(sa, buf, bytes);            /* write bytes to socket */
+            fprintf(stdout, "PACKET NO: %d\n", i);
+            fflush(stdout);
         }
         close(fd);  /* close file */
         close(sa);  /* close connection */

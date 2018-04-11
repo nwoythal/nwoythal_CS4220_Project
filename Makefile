@@ -1,5 +1,5 @@
 CC=gcc
-FLAGS=-Wall -Werror -Wno-pointer-sign
+FLAGS=-Wall -Werror -Wno-pointer-sign -lm
 
 all:
 	$(MAKE) clean
