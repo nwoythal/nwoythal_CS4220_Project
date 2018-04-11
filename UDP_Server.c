@@ -7,60 +7,52 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define SERVER_UDP_PORT		5000	
-#define MAXLEN		4096
+#define SERVER_UDP_PORT 2315 /* 2+Last 3 of ID */
+#define MAXLEN 4096
+
+void fatal(char *string);
 
 int main(int argc, char **argv)
 {
-	int 	sd, client_len, port, n;
-	char 	buf[MAXLEN];
-	struct 	sockaddr_in 	server, client;
+    int sd, client_len, n, loss_prob, protocol;
+    char buf[MAXLEN];
+    struct sockaddr_in server, client;
 
-	switch(argc) {
-	case 1:
-		port = SERVER_UDP_PORT;
-		break;
-	case 2:
-		port = atoi(argv[1]);
-		break;
-	default:
-		fprintf(stderr, "Usage: %s [port]\n", argv[0]);
-		exit(1);
-	}
-		
-	/* Create a datagram socket */
-	if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		fprintf(stderr, "Can't create a socket\n");
-		exit(1);
-	}
+    if(argc != 3)
+    {
+        fprintf(stderr, "Usage: ./udp_server [loss_probabilty] [protocol_type]\n");
+        fprintf(stderr, "    Protocol types: 1 - Stop and wait\n");
+        fprintf(stderr, "                    2 - Go back N\n");
+        fatal("                    3 - Selective repeat\n");
+    }
+    loss_prob = atoi(argv[1]);
+    if(loss_prob < 0 || loss_prob > 100) fatal("Invalid loss probability.");
+    protocol = atoi(argv[2]) - 1;
+    if(protocol < 0 || protocol > 2) fatal("Invalid protocol.");
+    /* Create a datagram socket */
+    sd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sd == -1) fatal("Can't create a socket");
 
 
-	/* Bind an address to the socket */
-	bzero((char *)&server, sizeof(server));
-	server.sin_family = AF_INET;
-	server.sin_port = htons(port);
-	server.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (bind(sd, (struct sockaddr *)&server, 
-	sizeof(server)) == -1) {
-		fprintf(stderr, "Can't bind name to socket\n");
-		exit(1);
-	}
+    /* Bind an address to the socket */
+    bzero((char *)&server, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_port = htons(SERVER_UDP_PORT);
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind(sd, (struct sockaddr *)&server, sizeof(server)) == -1) fatal("Can't bind name to socket");
+    while (1)
+    {
+        client_len = sizeof(client);
+        if ((n = recvfrom(sd, buf, MAXLEN, 0, (struct sockaddr *)&client, &client_len)) < 0) fatal("Can't receive datagram");
 
-	while (1) {
-		client_len = sizeof(client);
-		if ((n = recvfrom(sd, buf, MAXLEN, 0, 
-		(struct sockaddr *)&client, &client_len)) < 0) {
-		      fprintf(stderr, "Can't receive datagram\n");
-		      exit(1);
-		}
-
-		if (sendto(sd, buf, n, 0, 
-		(struct sockaddr *)&client, client_len) != n) {
-		      fprintf(stderr, "Can't send datagram\n");
-		      exit(1);
-		}
-	}
-	close(sd);
-	return(0);
+        if (sendto(sd, buf, n, 0, (struct sockaddr *)&client, client_len) != n) fatal("Can't send datagram");
+    }
+    close(sd);
+    return(0);
 }
 
+void fatal(char *string)
+{
+    printf("%s\n", string);
+    exit(1);
+}

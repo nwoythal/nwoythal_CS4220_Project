@@ -12,22 +12,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define SERVER_PORT 2315  /* 2+Last 3 of ID */
 #define BUF_SIZE 4096     /* block transfer size */
-#define srt(s) #s
 
 void fatal(char *string);
 
 int main(int argc, char **argv)
 {
-    int c, s, bytes;
+    int c, s, bytes, i;
     char buf[BUF_SIZE];           /* buffer for incoming file */
     struct hostent *h;            /* info about server */
     struct sockaddr_in channel;   /* holds IP address */
     FILE * fptr;                  /* File pointer for dest file */
 
-    if (argc != 4) fatal("Usage: client server-name src-file-name dest-file-name");
+    if (argc != 4) fatal("Usage: ./client_tcp server-name src-file-name dest-file-name");
     h = gethostbyname(argv[1]);        /* look up host's IP address */
     if (!h) fatal("gethostbyname failed");
 
@@ -46,11 +46,13 @@ int main(int argc, char **argv)
     /* Go get the file and write it to standard output. */
     fptr = fopen(argv[3] ,"wb");  /* Open file, potentially a binary */
     if(!fptr) fatal("Could not open destination file");
-    while (1)
+
+    for(i = 0;; i++)
     {
         bytes = read(s, buf, BUF_SIZE);  /* read from socket */
         if (bytes <= 0) exit(0);  /* check for end of file */
         fwrite(buf, sizeof(char), bytes, fptr);  /* write to file */
+        fprintf(stdout, "PACKET NO: %d\n", i);
     }
 }
 
