@@ -33,7 +33,6 @@ int main(int argc, char **argv)
     sd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sd == -1) fatal("Can't create a socket");
 
-
     /* Bind an address to the socket */
     bzero((char *)&server, sizeof(server));
     server.sin_family = AF_INET;
