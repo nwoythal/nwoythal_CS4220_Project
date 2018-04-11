@@ -16,12 +16,13 @@
 
 long delay(struct timeval t1, struct timeval t2);
 void fatal(char *string);
+int frame_count(int data_size, int frame_size);
 
 int main(int argc, char **argv)
 {
     int frame_size = DEFLEN, port = SERVER_UDP_PORT;
-    int i, j, sd, server_len;
-    char *host, rbuf[MAXLEN], sbuf[MAXLEN];
+    int sd, server_len, num_frames;
+    char *host, rbuf[MAXLEN], sbuf[MAXLEN], src_filename[MAXLEN];
     struct hostent *hp;
     struct sockaddr_in server;
     struct timeval start, end;
@@ -32,6 +33,7 @@ int main(int argc, char **argv)
         case 6:
             if(strcmp(*argv, "-s") != 0 || (frame_size = atoi(*++argv)))
             {
+                if (frame_size > MAXLEN) fatal("Data is too big");
                 argv++;
             } /* Drop through */
         case 4:
@@ -50,12 +52,8 @@ int main(int argc, char **argv)
     hp = gethostbyname(host);
     if (!hp) fatal("Can't get server's IP address");
     bcopy(hp->h_addr, (char *) &server.sin_addr, hp->h_length);
-    if (frame_size > MAXLEN) fatal("Data is too big");
-    for (i = 0; i < frame_size; i++)
-    {
-        j = (i < 26) ? i : i % 26;
-        sbuf[i] = 'a' + j;
-    }
+    strcpy(src_filename, *argv);
+    num_frames = frame_count(strlen(src_filename), frame_size);
 
     /* construct data to send to the server */
     gettimeofday(&start, NULL); /* start delay measurement */
@@ -89,5 +87,5 @@ void fatal(char *string)
 
 int frame_count(int data_size, int frame_size)
 {
-    return (int)ceil(data_size/frame_size);
+    return (int)ceil((double)data_size/frame_size);
 }
