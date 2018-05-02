@@ -1,9 +1,3 @@
-/* This page contains the client program. The following one contains the
- * server program. Once the server has been compiled and started, clients
- * anywhere on the Internet can send commands (file names) to the server.
- * The server responds by opening and returning the entire file requested.
- */
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

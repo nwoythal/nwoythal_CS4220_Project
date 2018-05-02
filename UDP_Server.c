@@ -3,18 +3,26 @@
 #include <strings.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+#include "utils.h"
 
 #define SERVER_UDP_PORT 2315 /* 2+Last 3 of ID */
 #define MAXLEN 4096
 
+int sd; /* Global handle so we can close on ctrl+c */
+
 void fatal(char *string);
+void send_data(int protocol, int frames_needed, int socket);
+void handle_sigint();
 
 int main(int argc, char **argv)
 {
-    int sd, client_len, n, loss_prob, protocol;
+    int loss_prob, protocol, client_len, get_request;
     char buf[MAXLEN];
     struct sockaddr_in server, client;
 
@@ -27,11 +35,13 @@ int main(int argc, char **argv)
     }
     loss_prob = atoi(argv[1]);
     if(loss_prob < 0 || loss_prob > 100) fatal("Invalid loss probability.");
-    protocol = atoi(argv[2]) - 1;
-    if(protocol < 0 || protocol > 2) fatal("Invalid protocol.");
+    protocol = atoi(argv[2]);
+    if(protocol < 1 || protocol > 3) fatal("Invalid protocol.");
     /* Create a datagram socket */
     sd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sd == -1) fatal("Can't create a socket");
+
+    signal(SIGINT, handle_sigint); /* Create signal handler */
 
     /* Bind an address to the socket */
     bzero((char *)&server, sizeof(server));
@@ -39,19 +49,49 @@ int main(int argc, char **argv)
     server.sin_port = htons(SERVER_UDP_PORT);
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(sd, (struct sockaddr *)&server, sizeof(server)) == -1) fatal("Can't bind name to socket");
-    while (1)
+    while(1)
     {
         client_len = sizeof(client);
-        if ((n = recvfrom(sd, buf, MAXLEN, 0, (struct sockaddr *)&client, &client_len)) < 0) fatal("Can't receive datagram");
-
-        if (sendto(sd, buf, n, 0, (struct sockaddr *)&client, client_len) != n) fatal("Can't send datagram");
+        get_request = recvfrom(sd, buf, MAXLEN, 0, (struct sockaddr *)&client, &client_len);
+        if(get_request >= 0)
+        {
+        }
     }
-    close(sd);
-    return(0);
 }
 
 void fatal(char *string)
 {
     printf("%s\n", string);
     exit(1);
+}
+
+void send_data(int protocol, int frames_needed, int socket)
+{
+    int frame_count;
+    switch(protocol)
+    {
+        case 1:
+            for(frame_count = 0; frame_count <= frames_needed; frame_count++)
+            {
+            }
+            break;
+        case 2:
+            for(frame_count = 0; frame_count <= frames_needed; frame_count++)
+            {
+                
+            }
+            break;
+        case 3:
+            for(frame_count = 0; frame_count <= frames_needed; frame_count++)
+            {
+                
+            }
+            break;
+    }
+}
+
+void handle_sigint()
+{
+    close(sd);
+    exit(0);
 }
