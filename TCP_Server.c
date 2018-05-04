@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
+#include "utils.h"
 
 #define SERVER_PORT 2315  /* 2+Last 3 of ID */
 #define BUF_SIZE 4096     /* block transfer size */
@@ -56,8 +57,6 @@ int main(int argc, char *argv[])
             bytes = read(fd, buf, BUF_SIZE);  /* read from file */
             if (bytes <= 0) break;            /* check for end of file */
             write(sa, buf, bytes);            /* write bytes to socket */
-            fprintf(stdout, "PACKET NO: %d\n", i);
-            fflush(stdout);
         }
         close(fd);  /* close file */
         close(sa);  /* close connection */

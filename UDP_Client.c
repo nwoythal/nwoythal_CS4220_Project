@@ -63,14 +63,10 @@ int main(int argc, char **argv)
     switch(protocol)
     {
         case 1: /* Stop and wait */
-           send_saw();
-           recieve_saw();
            break;
         case 2: /* Go back n */
            break;
         case 3: /* Selective repeat */
-           send_sr();
-           recieve_sr();
            break;
     }
 
