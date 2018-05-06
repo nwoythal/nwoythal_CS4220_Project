@@ -51,10 +51,10 @@ int main(int argc, char **argv)
     if (bind(sd, (struct sockaddr *)&server, sizeof(server)) == -1) fatal("Can't bind name to socket");
     while(1)
     {
-        saw_listen(sd, NULL, 0, &client, buf);
-        if(get_request >= 0)
+        get_request = saw_listen(sd, NULL, 0, &client, buf);
+        if(get_request > 0)
         {
-            
+            saw_send(sd, buf, loss_prob, client);
         }
     }
 }
