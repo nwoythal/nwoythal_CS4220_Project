@@ -23,11 +23,12 @@ void usage();
 
 int main(int argc, char **argv)
 {
-    int frame_size = DEFLEN, port = SERVER_UDP_PORT;
-    int sd, protocol;
-    char *host, rbuf[MAXLEN], sbuf[MAXLEN], src_filename[MAXLEN];
+    int frame_size = DEFLEN, port = SERVER_UDP_PORT, written = DATA_LEN;
+    int sd, protocol, i;
+    char *host, src_filename[MAXLEN];
+    FILE *fh;
     struct hostent *hp;
-    struct sockaddr_in server;
+    struct sockaddr_in server, client;
 
     switch(argc)
     {
@@ -63,16 +64,19 @@ int main(int argc, char **argv)
     switch(protocol)
     {
         case 1: /* Stop and wait */
-           break;
+            /* To make life easier, we assume the request makes it there okay */
+            saw_send(sd, src_filename, 0, client);
+            /* We're always going to fill the buffer unless it's the last packet. */
+            fh = fopen(src_filename, "w");
+            for(i = 0; written == DATA_LEN; i++)
+            {
+                written = saw_listen(sd, fh, i, &client, NULL);
+            }
+            break;
         case 2: /* Go back n */
-           break;
+            break;
         case 3: /* Selective repeat */
-           break;
-    }
-
-    if (strncmp(sbuf, rbuf, frame_size) != 0)
-    {
-        printf("Data is corrupted\n");
+            break;
     }
 
     close(sd);
