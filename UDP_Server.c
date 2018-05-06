@@ -22,7 +22,7 @@ void handle_sigint();
 
 int main(int argc, char **argv)
 {
-    int loss_prob, protocol, client_len, get_request;
+    int loss_prob, protocol, get_request;
     char buf[MAXLEN];
     struct sockaddr_in server, client;
 
@@ -51,10 +51,10 @@ int main(int argc, char **argv)
     if (bind(sd, (struct sockaddr *)&server, sizeof(server)) == -1) fatal("Can't bind name to socket");
     while(1)
     {
-        client_len = sizeof(client);
-        get_request = recvfrom(sd, buf, MAXLEN, 0, (struct sockaddr *)&client, &client_len);
+        saw_listen(sd, NULL, 0, &client, buf);
         if(get_request >= 0)
         {
+            
         }
     }
 }
@@ -63,31 +63,6 @@ void fatal(char *string)
 {
     printf("%s\n", string);
     exit(1);
-}
-
-void send_data(int protocol, int frames_needed, int socket)
-{
-    int frame_count;
-    switch(protocol)
-    {
-        case 1:
-            for(frame_count = 0; frame_count <= frames_needed; frame_count++)
-            {
-            }
-            break;
-        case 2:
-            for(frame_count = 0; frame_count <= frames_needed; frame_count++)
-            {
-                
-            }
-            break;
-        case 3:
-            for(frame_count = 0; frame_count <= frames_needed; frame_count++)
-            {
-                
-            }
-            break;
-    }
 }
 
 void handle_sigint()
