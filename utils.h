@@ -18,8 +18,8 @@ struct frame
 /***********************
  *  SELECTIVE REPEAT   *
  ***********************/
-int sr_send(int sock_handle, struct sockaddr_in client, int drop_chance,
-            FILE *fh)
+int sr_send(int sock_handle, struct sockaddr_in client, FILE *fh, 
+            int drop_chance, char *filename)
 {
     struct frame data_frame, nack;
     struct timeval timeout;
@@ -29,13 +29,23 @@ int sr_send(int sock_handle, struct sockaddr_in client, int drop_chance,
     setsockopt(sock_handle, SOL_SOCKET, SO_RCVTIMEO, &timeout, 
                 sizeof(timeout));
 
+    if(fh == NULL && filename != NULL)
+    {
+        strcpy(data_frame.body, filename);
+        sendto(sock_handle, &data_frame, sizeof(data_frame), 0, 
+                (struct sockaddr *)&client, sizeof(client));
+        return 0;
+    }
     while(1)
     {
-        memset(data_frame.body, 0, sizeof(data_frame.body));
-        if(fread(buf, sizeof(char), DATA_LEN, fh) > 0)
+        memset(data_frame.body, '\0', sizeof(data_frame.body));
+        if(fh != NULL && fread(buf, sizeof(char), DATA_LEN, fh) > 0)
         {
-            sendto(sock_handle, &data_frame, sizeof(data_frame), 0, 
-                    (struct sockaddr *)&client, sizeof(client));
+            if(((rand() % 100) + 1) > drop_chance)
+            {
+                sendto(sock_handle, &data_frame, sizeof(data_frame), 0, 
+                        (struct sockaddr *)&client, sizeof(client));
+            }
         }
 
         /* Listen passively for .1 ms */
@@ -58,23 +68,28 @@ int sr_send(int sock_handle, struct sockaddr_in client, int drop_chance,
     return 0;
 }
 
-int sr_listen(int sock_handle, struct sockaddr_in client, int drop_chance,
-                char *filename)
+int sr_listen(int sock_handle, struct sockaddr_in client, char *filename)
 {
     int i, j, dropped_packet, last_packet, offset;
     struct frame data_frame, nack;
-    FILE *fh = fopen(filename, "r+b");
+    FILE *fh = fopen(filename, "w");
     int dropped[8];
 
+    if(fh == NULL)
+    {
+        recvfrom(sock_handle, &data_frame, sizeof(data_frame), 0,
+                (struct sockaddr*) &client, (socklen_t *)sizeof(client));
+        filename = data_frame.body;
+    }
     memset(dropped, -1, sizeof(dropped));
 
     printf("BEGINNING SR_LISTEN\n");
+    data_frame.body[DATA_LEN - 1] = 'Z';
     /* Passively listen. Stupid hack to determine last packet. */
     while(data_frame.body[DATA_LEN - 1] != '\0')
     {
         recvfrom(sock_handle, &data_frame, sizeof(data_frame), 0,
-                            (struct sockaddr*) &client, 
-                            (socklen_t *)sizeof(client));
+                (struct sockaddr*) &client, (socklen_t *)sizeof(client));
         dropped_packet = (data_frame.sequence_no != (last_packet + 1));
         if(!dropped_packet)
         {
@@ -121,7 +136,7 @@ int sr_listen(int sock_handle, struct sockaddr_in client, int drop_chance,
     nack.sequence_no = -1;
     sendto(sock_handle, &nack, sizeof(nack), 0, (struct sockaddr *) &client,
              sizeof(client));
-
+    fclose(fh);
     return 0;
 }
 

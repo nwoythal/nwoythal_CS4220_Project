@@ -25,6 +25,7 @@ int main(int argc, char **argv)
     int loss_prob, protocol, get_request;
     char buf[MAXLEN];
     struct sockaddr_in server, client;
+    FILE *fh;
 
     if(argc != 3)
     {
@@ -51,10 +52,23 @@ int main(int argc, char **argv)
     if (bind(sd, (struct sockaddr *)&server, sizeof(server)) == -1) fatal("Can't bind name to socket");
     while(1)
     {
-        get_request = saw_listen(sd, NULL, 0, &client, buf);
-        if(get_request > 0)
+        switch(protocol)
         {
-            saw_send(sd, buf, loss_prob, client);
+            case 1:
+                get_request = saw_listen(sd, NULL, 0, &client, buf);
+                if(get_request > 0)
+                {
+                    saw_send(sd, buf, loss_prob, client);
+                }
+                break;
+            case 2:
+                fatal("Not implemented");
+                break;
+            case 3:
+                sr_listen(sd, client, buf);
+                fh = fopen(buf, "r+");
+                sr_send(sd, client, fh, loss_prob, NULL);
+                break;
         }
     }
 }

@@ -73,8 +73,11 @@ int main(int argc, char **argv)
             }
             break;
         case 2: /* Go back n */
+            fatal("Not implemented.");
             break;
         case 3: /* Selective repeat */
+            sr_send(sd, client, NULL, 0, src_filename);
+            sr_listen(sd, client, src_filename);
             break;
     }
 
